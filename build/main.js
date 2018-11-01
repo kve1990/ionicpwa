@@ -29,8 +29,8 @@ var EventsService = /** @class */ (function () {
             {
                 id: 1,
                 studentId: 1,
-                startTime: new Date(2016, 7, 18, 10, 41),
-                endTime: new Date(2016, 7, 18, 13, 30)
+                startTime: (new Date(2016, 7, 18, 10, 41)).toISOString(),
+                endTime: (new Date(2016, 7, 18, 13, 30)).toISOString()
             }
         ];
         this.events = new __WEBPACK_IMPORTED_MODULE_1_rxjs_BehaviorSubject__["BehaviorSubject"]([]);
@@ -40,18 +40,18 @@ var EventsService = /** @class */ (function () {
                 _this.events.next(res);
             }
             else {
-                storage.set('groups', _this._events)
+                storage.set('events', _this._events)
                     .then(function (res) { return _this.events.next(res); });
             }
         });
     }
-    EventsService.prototype.addEvent = function (studentId, timeStart, timeEnd) {
+    EventsService.prototype.addEvent = function (studentId, startTime, endTime) {
         var _this = this;
         var events = this.events.getValue();
-        this.storage.set('events', events.concat([{ id: Date.now(), studentId: studentId, timeStart: timeStart, timeEnd: timeEnd }]))
+        this.storage.set('events', events.concat([{ id: Date.now(), studentId: studentId, startTime: startTime, endTime: endTime }]))
             .then(function (res) { return _this.events.next(res); });
     };
-    EventsService.prototype.deleteGroup = function (id) {
+    EventsService.prototype.deleteEvent = function (id) {
         var events = this.events.getValue();
         var index = events.findIndex(function (event) { return event.id === id; });
         if (~index) {
@@ -133,7 +133,7 @@ var TabsPage = /** @class */ (function () {
         this.tab3Root = __WEBPACK_IMPORTED_MODULE_2__contact_contact__["a" /* ContactPage */];
     }
     TabsPage = __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0__angular_core__["m" /* Component */])({template:/*ion-inline-start:"/Users/valeriy/Projects/myApp/src/pages/tabs/tabs.html"*/'<ion-tabs>\n  <ion-tab [root]="tab1Root" tabTitle="Главная" tabIcon="home"></ion-tab>\n  <ion-tab [root]="tab2Root" tabTitle="Расписание" tabIcon="calendar"></ion-tab>\n  <ion-tab [root]="tab3Root" tabTitle="Обучаемые" tabIcon="contacts"></ion-tab>\n</ion-tabs>'/*ion-inline-end:"/Users/valeriy/Projects/myApp/src/pages/tabs/tabs.html"*/
+        Object(__WEBPACK_IMPORTED_MODULE_0__angular_core__["m" /* Component */])({template:/*ion-inline-start:"/Users/valeriy/Projects/ionicapp/src/pages/tabs/tabs.html"*/'<ion-tabs>\n  <ion-tab [root]="tab1Root" tabTitle="Главная" tabIcon="home"></ion-tab>\n  <ion-tab [root]="tab2Root" tabTitle="Расписание" tabIcon="calendar"></ion-tab>\n  <ion-tab [root]="tab3Root" tabTitle="Обучаемые" tabIcon="contacts"></ion-tab>\n</ion-tabs>'/*ion-inline-end:"/Users/valeriy/Projects/ionicapp/src/pages/tabs/tabs.html"*/
         }),
         __metadata("design:paramtypes", [])
     ], TabsPage);
@@ -176,7 +176,8 @@ var AboutPage = /** @class */ (function () {
         this.modalCtrl = modalCtrl;
         this.eventsService = eventsService;
         this.date = new Date(Date.now()).toISOString().slice(0, 10);
-        this.subsribes = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', "Вс"];
+        this.timeoffset = 'day';
+        this.daysOfWeek = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', "Вс"];
     }
     AboutPage.prototype.onWatch = function (evt) {
         var _this = this;
@@ -189,7 +190,13 @@ var AboutPage = /** @class */ (function () {
     AboutPage.prototype.ngOnInit = function () {
         var _this = this;
         this.studentsService.students.subscribe(function (students) { return _this.students = students; });
-        this.eventsService.events.subscribe(function (events) { return _this.events = events; });
+        this.eventsService.events.subscribe(function (events) {
+            _this.events = events;
+            var container = document.querySelector('.timetable');
+            if (_this.events && _this.events.length && container) {
+                _this.renderTable();
+            }
+        });
     };
     AboutPage.prototype.addEvent = function () {
         var modal = this.modalCtrl.create(__WEBPACK_IMPORTED_MODULE_4__modal_event__["a" /* ModalEvent */]);
@@ -198,24 +205,30 @@ var AboutPage = /** @class */ (function () {
     AboutPage.prototype.renderTable = function () {
         var _this = this;
         this.timetable = new Timetable();
+        console.log(this.events);
         var minHour = this.events
-            .map(function (event) { return event.startTime.getHours(); })
+            .map(function (event) { return (new Date(event.startTime)).getHours(); })
             .sort(function (a, b) { return a - b; })[0];
         var maxHour = this.events
-            .map(function (event) { return event.endTime.getHours(); })
+            .map(function (event) { return (new Date(event.endTime)).getHours(); })
             .sort(function (a, b) { return a - b; })[this.events.length - 1] + 1;
         this.timetable.setScope(minHour, maxHour);
-        this.timetable.addLocations(this.subsribes);
+        this.timetable.addLocations(this.daysOfWeek);
         this.events.forEach(function (event) {
             var student = _this.students.find(function (student) { return student.id === event.studentId; });
-            _this.timetable.addEvent(student.name, 'Ср', event.startTime, event.endTime);
+            var dayOfWeek = _this.daysOfWeek[_this.getDay(event.startTime)];
+            _this.timetable.addEvent(student.name, dayOfWeek, new Date(event.startTime), new Date(event.endTime));
         });
         var renderer = new Timetable.Renderer(this.timetable);
         renderer.draw('.timetable');
     };
+    AboutPage.prototype.getDay = function (date) {
+        var d = (new Date(date)).getDay();
+        return d === 0 ? 6 : d - 1;
+    };
     AboutPage = __decorate([
         Object(__WEBPACK_IMPORTED_MODULE_0__angular_core__["m" /* Component */])({
-            selector: 'page-about',template:/*ion-inline-start:"/Users/valeriy/Projects/myApp/src/pages/about/about.html"*/'<ion-header>\n  <ion-navbar>\n    <ion-title>\n      Расписание\n    </ion-title>\n  </ion-navbar>\n</ion-header>\n\n<ion-content padding>\n\n    <div padding>\n        <ion-segment [(ngModel)]="timeoffset" (ngModelChange)="onWatch($event)">\n          <ion-segment-button value="day">\n            День\n          </ion-segment-button>\n          <ion-segment-button value="week">\n            Неделя\n          </ion-segment-button>\n          \n        </ion-segment>\n      </div>\n      \n      <div [ngSwitch]="timeoffset">\n        <ng-container *ngSwitchCase="\'day\'">\n          <ion-item>\n            <ion-label>Дата</ion-label>\n            <ion-datetime displayFormat="DD.MM.YYYY" [(ngModel)]="date"></ion-datetime>\n          </ion-item>\n        </ng-container>\n\n        <ng-container *ngSwitchCase="\'week\'">\n          <div class="timetable"></div>\n\n          <button ion-button (tap)="addEvent()">Добавить</button>\n        </ng-container>\n      </div>\n\n</ion-content>\n'/*ion-inline-end:"/Users/valeriy/Projects/myApp/src/pages/about/about.html"*/
+            selector: 'page-about',template:/*ion-inline-start:"/Users/valeriy/Projects/ionicapp/src/pages/about/about.html"*/'<ion-header>\n  <ion-navbar>\n    <ion-title>\n      Расписание\n    </ion-title>\n  </ion-navbar>\n</ion-header>\n\n<ion-content padding>\n\n    <div padding>\n        <ion-segment [(ngModel)]="timeoffset" (ngModelChange)="onWatch($event)">\n          <ion-segment-button value="day">\n            День\n          </ion-segment-button>\n          <ion-segment-button value="week">\n            Неделя\n          </ion-segment-button>\n          \n        </ion-segment>\n      </div>\n      \n      <div [ngSwitch]="timeoffset">\n        <ng-container *ngSwitchCase="\'day\'">\n          <ion-item>\n            <ion-label>Дата</ion-label>\n            <ion-datetime displayFormat="DD.MM.YYYY" [(ngModel)]="date"></ion-datetime>\n          </ion-item>\n\n          <ion-list>\n            <ion-item-sliding *ngFor="let event of events">\n              <ion-item>\n                <ion-avatar item-start>\n                  <img src="https://ionicframework.com/dist/preview-app/www/assets/img/avatar-finn.png">\n                </ion-avatar>\n                <h2>8:30 - 12:00</h2>\n                <h3>Valeriy Kondratko</h3>\n              </ion-item>\n              <ion-item-options side="left">\n                <button ion-button color="primary">\n                  <ion-icon name="text"></ion-icon>\n                  Text\n                </button>\n                <button ion-button color="secondary">\n                  <ion-icon name="call"></ion-icon>\n                  Call\n                </button>\n              </ion-item-options>\n              <ion-item-options side="right">\n                <button ion-button color="primary">\n                  <ion-icon name="mail"></ion-icon>\n                  Email\n                </button>\n              </ion-item-options>\n            </ion-item-sliding>\n          </ion-list>\n        </ng-container>\n\n        <ng-container *ngSwitchCase="\'week\'">\n          <div class="timetable"></div>\n\n          <button ion-button (tap)="addEvent()">Добавить</button>\n        </ng-container>\n      </div>\n\n</ion-content>\n'/*ion-inline-end:"/Users/valeriy/Projects/ionicapp/src/pages/about/about.html"*/
         }),
         __metadata("design:paramtypes", [__WEBPACK_IMPORTED_MODULE_1_ionic_angular__["f" /* NavController */],
             __WEBPACK_IMPORTED_MODULE_2__services_students_service__["a" /* StudentService */],
@@ -264,20 +277,19 @@ var ModalEvent = /** @class */ (function () {
         this.viewCtrl = viewCtrl;
         this.groupsService.groups.subscribe(function (groups) { return _this.groups = groups; });
         this.studentsService.students.subscribe(function (students) { return _this.students = students; });
-        this.eventsService.events.subscribe(function (events) { return _this.events = events; });
     }
     ModalEvent.prototype.dismiss = function () {
         this.viewCtrl.dismiss();
     };
-    ModalEvent.prototype.save = function () {
-        var startTime = new Date();
-        var endTime = new Date();
-        this.eventsService.addEvent(this.selectedStudent.id, startTime, endTime);
+    ModalEvent.prototype.addEvent = function () {
+        var startTime = this.date + "T" + this.startTime;
+        var endTime = this.date + "T" + this.endTime;
+        this.eventsService.addEvent(this.selectedStudent, startTime, endTime);
         this.dismiss();
     };
     ModalEvent = __decorate([
         Object(__WEBPACK_IMPORTED_MODULE_0__angular_core__["m" /* Component */])({
-            selector: 'page-event',template:/*ion-inline-start:"/Users/valeriy/Projects/myApp/src/pages/about/modal-event.html"*/'<ion-header>\n    <ion-toolbar>\n        <ion-title>\n            Запись на занятие\n        </ion-title>\n        <ion-buttons start>\n        <button ion-button (click)="dismiss()">\n            <span ion-text color="primary" showWhen="ios">Отмена</span>\n            <ion-icon name="md-close" showWhen="android,windows"></ion-icon>\n        </button>\n        </ion-buttons>\n    </ion-toolbar>\n</ion-header>\n\n<ion-content>\n        <ion-list>\n            <ion-item *ngIf="groups && groups.length">\n                <ion-label>Группа</ion-label>\n                <ion-select [(ngModel)]="selectedGroup">\n                <ion-option *ngFor="let group of groups; let i = index" [value]="group.id" [selected]="i == (groups.length-1)">\n                    {{group.id}}\n                </ion-option>\n                </ion-select>\n            </ion-item>\n\n            <ion-item *ngIf="selectedGroup">\n                <ion-label>Обучаемый</ion-label>\n                <ion-select [(ngModel)]="selectedStudent">\n                <ion-option *ngFor="let student of students | groupFilter:selectedGroup" [value]="student.id">\n                    {{ student.name }} {{student.lastname}}\n                </ion-option>\n                </ion-select>\n            </ion-item>\n\n            <ion-item>\n                <ion-label>Дата</ion-label>\n                <ion-datetime displayFormat="DD.MM.YYYY" [(ngModel)]="date"></ion-datetime>\n            </ion-item>\n\n            <ion-item>\n                <ion-label>Время начала занятия</ion-label>\n                <ion-datetime displayFormat="DD.MM.YYYY" [(ngModel)]="startTime"></ion-datetime>\n            </ion-item>\n\n            <ion-item>\n                <ion-label>Время окончания занятия</ion-label>\n                <ion-datetime displayFormat="DD.MM.YYYY" [(ngModel)]="endTime"></ion-datetime>\n            </ion-item>\n\n            <ion-item>\n                <button color="secondary" ion-button>Добавить</button>\n            </ion-item>\n        </ion-list>\n</ion-content>'/*ion-inline-end:"/Users/valeriy/Projects/myApp/src/pages/about/modal-event.html"*/
+            selector: 'page-event',template:/*ion-inline-start:"/Users/valeriy/Projects/ionicapp/src/pages/about/modal-event.html"*/'<ion-header>\n    <ion-toolbar>\n        <ion-title>\n            Запись на занятие\n        </ion-title>\n        <ion-buttons start>\n        <button ion-button (click)="dismiss()">\n            <span ion-text color="primary" showWhen="ios">Отмена</span>\n            <ion-icon name="md-close" showWhen="android,windows"></ion-icon>\n        </button>\n        </ion-buttons>\n    </ion-toolbar>\n</ion-header>\n\n<ion-content>\n        <ion-list>\n            <ion-item *ngIf="groups && groups.length">\n                <ion-label>Группа</ion-label>\n                <ion-select [(ngModel)]="selectedGroup">\n                <ion-option *ngFor="let group of groups; let i = index" [value]="group.id" [selected]="i == (groups.length-1)">\n                    {{group.id}}\n                </ion-option>\n                </ion-select>\n            </ion-item>\n\n            <ion-item *ngIf="selectedGroup">\n                <ion-label>Обучаемый</ion-label>\n                <ion-select [(ngModel)]="selectedStudent">\n                <ion-option *ngFor="let student of students | groupFilter:selectedGroup" [value]="student.id">\n                    {{ student.name }} {{student.lastname}}\n                </ion-option>\n                </ion-select>\n            </ion-item>\n\n            <ion-item>\n                <ion-label>Дата</ion-label>\n                <ion-datetime displayFormat="DD.MM.YYYY" [(ngModel)]="date"></ion-datetime>\n            </ion-item>\n\n            <ion-item>\n                <ion-label>Время начала занятия</ion-label>\n                <ion-datetime displayFormat="HH:mm" pickerFormat="HH mm" [(ngModel)]="startTime"></ion-datetime>\n            </ion-item>\n\n            <ion-item>\n                <ion-label>Время окончания занятия</ion-label>\n                <ion-datetime displayFormat="HH:mm" pickerFormat="HH mm" [(ngModel)]="endTime"></ion-datetime>\n            </ion-item>\n\n            <ion-item>\n                <button color="secondary" (tap)="addEvent()" ion-button>Добавить</button>\n            </ion-item>\n        </ion-list>\n</ion-content>'/*ion-inline-end:"/Users/valeriy/Projects/ionicapp/src/pages/about/modal-event.html"*/
         }),
         __metadata("design:paramtypes", [__WEBPACK_IMPORTED_MODULE_1_ionic_angular__["h" /* Platform */],
             __WEBPACK_IMPORTED_MODULE_1_ionic_angular__["g" /* NavParams */],
@@ -351,9 +363,12 @@ var ContactPage = /** @class */ (function () {
         var modal = this.modalCtrl.create(__WEBPACK_IMPORTED_MODULE_2__modal_page__["a" /* ModalPage */], { studentId: studentId, selectedGroup: selectedGroup });
         modal.present();
     };
+    ContactPage.prototype.onSelectGroup = function (group) {
+        this.studentsOfGroup = this.students.filter(function (student) { return student.group === group; });
+    };
     ContactPage = __decorate([
         Object(__WEBPACK_IMPORTED_MODULE_0__angular_core__["m" /* Component */])({
-            selector: 'page-contact',template:/*ion-inline-start:"/Users/valeriy/Projects/myApp/src/pages/contact/contact.html"*/'<ion-header>\n  <ion-navbar>\n    <ion-title>\n      Обучаемые\n    </ion-title>\n  </ion-navbar>\n</ion-header>\n\n<ion-content>\n  <ion-card>\n    <ion-card-content>\n        <ion-list>\n          <ion-item>\n            <ion-label>Группа</ion-label>\n            <ion-select [(ngModel)]="selectedGroup">\n              <ion-option *ngFor="let group of groups; let i = index" [value]="group.id" [selected]="i == (groups.length-1)">\n                {{group.id}}\n              </ion-option>\n            </ion-select>\n          </ion-item>\n        </ion-list>\n    </ion-card-content>\n  </ion-card>\n\n  <ion-card>\n  \n    <ion-card-content>\n      <ion-item-group *ngIf="selectedGroup && students && students.length; else noStudents">\n        <ion-list-header>\n            Cписок группы\n        </ion-list-header>\n        <button ion-item *ngFor="let student of students | groupFilter:selectedGroup" (click)="itemSelected(student)">\n            {{ student.name }} {{student.lastname}}\n        </button>\n      </ion-item-group>\n      <ng-template #noStudents>В этой группе ещё нет обучаемых</ng-template>\n    </ion-card-content>\n  \n  </ion-card>\n\n  <ion-fab right bottom>\n    <button ion-fab><ion-icon name="add"></ion-icon></button>\n    <ion-fab-list side="left">\n      <button ion-fab (click)="addStudent()"><ion-icon ios="ios-person" md="md-person"></ion-icon></button>\n      <button ion-fab (click)="addGroup()"><ion-icon ios="ios-people" md="md-people"></ion-icon></button>\n    </ion-fab-list>\n  </ion-fab>\n</ion-content>\n'/*ion-inline-end:"/Users/valeriy/Projects/myApp/src/pages/contact/contact.html"*/
+            selector: 'page-contact',template:/*ion-inline-start:"/Users/valeriy/Projects/ionicapp/src/pages/contact/contact.html"*/'<ion-header>\n  <ion-navbar>\n    <ion-title>\n      Обучаемые\n    </ion-title>\n  </ion-navbar>\n</ion-header>\n\n<ion-content>\n  <ion-card>\n    <ion-card-content>\n        <ion-list>\n          <ion-item>\n            <ion-label>Группа</ion-label>\n            <ion-select [(ngModel)]="selectedGroup" (ngModelChange)="onSelectGroup($event)">\n              <ion-option *ngFor="let group of groups; let i = index" [value]="group.id" [selected]="i == (groups.length-1)">\n                {{group.id}}\n              </ion-option>\n            </ion-select>\n          </ion-item>\n        </ion-list>\n    </ion-card-content>\n  </ion-card>\n\n  <ion-card>\n  \n    <ion-card-content>\n      <ion-item-group *ngIf="students && students.length; else noStudents">\n        <ion-list-header>\n            Cписок группы\n        </ion-list-header>\n        <button ion-item *ngFor="let student of students | groupFilter:selectedGroup" (click)="itemSelected(student)">\n            {{ student.name }} {{student.lastname}}\n        </button>\n      </ion-item-group>\n      <ng-template #noStudents>В этой группе ещё нет обучаемых</ng-template>\n    </ion-card-content>\n  \n  </ion-card>\n\n  <ion-fab right bottom>\n    <button ion-fab><ion-icon name="add"></ion-icon></button>\n    <ion-fab-list side="left">\n      <button ion-fab (click)="addStudent()"><ion-icon ios="ios-person" md="md-person"></ion-icon></button>\n      <button ion-fab (click)="addGroup()"><ion-icon ios="ios-people" md="md-people"></ion-icon></button>\n    </ion-fab-list>\n  </ion-fab>\n</ion-content>\n'/*ion-inline-end:"/Users/valeriy/Projects/ionicapp/src/pages/contact/contact.html"*/
         }),
         __metadata("design:paramtypes", [__WEBPACK_IMPORTED_MODULE_1_ionic_angular__["f" /* NavController */],
             __WEBPACK_IMPORTED_MODULE_4__services_students_service__["a" /* StudentService */],
@@ -439,7 +454,7 @@ var ModalPage = /** @class */ (function () {
     };
     ModalPage = __decorate([
         Object(__WEBPACK_IMPORTED_MODULE_0__angular_core__["m" /* Component */])({
-            selector: 'page-modal',template:/*ion-inline-start:"/Users/valeriy/Projects/myApp/src/pages/contact/modal-page.html"*/'<ion-header>\n    <ion-toolbar>\n        <ion-title>\n            Обучаемый\n        </ion-title>\n        <ion-buttons start>\n        <button ion-button (click)="dismiss()">\n            <span ion-text color="primary" showWhen="ios">Отмена</span>\n            <ion-icon name="md-close" showWhen="android,windows"></ion-icon>\n        </button>\n        </ion-buttons>\n    </ion-toolbar>\n</ion-header>\n\n<ion-content *ngIf="student">\n        <ion-list *ngIf="!isEditing">\n            <ion-item>\n                <ion-avatar item-start>\n                <img src="https://ionicframework.com/dist/preview-app/www/assets/img/avatar-gollum.jpg">\n                </ion-avatar>\n                <h2>{{student?.name}} {{student?.lastname}}</h2>\n                <p>Группа {{student?.group}}</p>\n            </ion-item>\n            <ion-item>\n                {{student?.tel}}\n                <ion-note item-end>\n                    <ion-icon name="logo-vimeo"></ion-icon>\n                </ion-note>\n            </ion-item>\n            <ion-item>\n                Возраст\n                <ion-note item-end>{{student?.age}}</ion-note>\n            </ion-item>\n            <ion-item>\n                Email\n                <ion-note item-end>{{student?.email}}</ion-note>\n            </ion-item>\n        </ion-list>\n\n        <ion-list *ngIf="isEditing">\n            <form (ngSubmit)="onSubmit()" #heroForm="ngForm">\n                <ion-item class="form-group">\n                    <ion-label floating>Имя</ion-label>\n                    <ion-input class="form-control" name="name" type="text" [(ngModel)]="student.name" required></ion-input>\n                </ion-item>\n        \n                <ion-item>\n                    <ion-label floating>Фамилия</ion-label>\n                    <ion-input type="text" name="lastname" [(ngModel)]="student.lastname" required></ion-input>\n                </ion-item>\n        \n                <ion-item>\n                    <ion-label floating>Возраст</ion-label>\n                    <ion-input type="number" name="age" [(ngModel)]="student.age"></ion-input>\n                </ion-item>\n\n                <ion-item>\n                    <ion-label floating>Телефон</ion-label>\n                    <ion-input type="text" name="tel" [(ngModel)]="student.tel"></ion-input>\n                </ion-item>\n        \n                <ion-item>\n                    <ion-label floating>Email</ion-label>\n                    <ion-input type="text" name="email" [(ngModel)]="student.email"></ion-input>\n                </ion-item>\n        \n                <ion-item *ngIf="groups && groups.length">\n                    <ion-label>Группа</ion-label>\n                    <ion-select  name="group" [(ngModel)]="student.group">\n                        <ion-option *ngFor="let group of groups" [value]="group.id">\n                            {{group.id}}\n                        </ion-option>\n                    </ion-select>\n                </ion-item>\n        \n                <ion-item>\n                    <div style="display: flex; justify-content: space-between; align-items: center;">\n                        <button  [disabled]="!heroForm.form.valid"type="submit" ion-fab mini color="secondary" (click)="save()">\n                            <ion-icon ios="ios-checkmark-circle" md="md-checkmark-circle"></ion-icon>\n                        </button>\n                        <button *ngIf="!isNewStudent" ion-fab mini color="danger" (click)="delete()">\n                            <ion-icon ios="ios-trash" md="md-trash"></ion-icon>\n                        </button>\n                    </div>\n                </ion-item>\n            </form>\n    \n        </ion-list>\n\n        <ion-list>\n            <ion-item>\n                <ion-label>Редактировать</ion-label>\n                <ion-toggle [(ngModel)]="isEditing"></ion-toggle>\n            </ion-item>\n        </ion-list>\n</ion-content>'/*ion-inline-end:"/Users/valeriy/Projects/myApp/src/pages/contact/modal-page.html"*/
+            selector: 'page-modal',template:/*ion-inline-start:"/Users/valeriy/Projects/ionicapp/src/pages/contact/modal-page.html"*/'<ion-header>\n    <ion-toolbar>\n        <ion-title>\n            Обучаемый\n        </ion-title>\n        <ion-buttons start>\n        <button ion-button (click)="dismiss()">\n            <span ion-text color="primary" showWhen="ios">Отмена</span>\n            <ion-icon name="md-close" showWhen="android,windows"></ion-icon>\n        </button>\n        </ion-buttons>\n    </ion-toolbar>\n</ion-header>\n\n<ion-content *ngIf="student">\n        <ion-list *ngIf="!isEditing">\n            <ion-item>\n                <ion-avatar item-start>\n                <img src="https://ionicframework.com/dist/preview-app/www/assets/img/avatar-gollum.jpg">\n                </ion-avatar>\n                <h2>{{student?.name}} {{student?.lastname}}</h2>\n                <p>Группа {{student?.group}}</p>\n            </ion-item>\n            <ion-item *ngIf="student.tel">\n                <a [href]="\'tel:\' + student.tel">{{student.tel}}</a>\n                <ion-note item-end>\n                    <a [href]="\'viber://chat?number=\' + student.tel"><ion-icon name="logo-vimeo"></ion-icon></a>\n                </ion-note>\n            </ion-item>\n            <ion-item>\n                Возраст\n                <ion-note item-end>{{student?.age}}</ion-note>\n            </ion-item>\n            <ion-item>\n                Email\n                <ion-note item-end>{{student?.email}}</ion-note>\n            </ion-item>\n        </ion-list>\n\n        <ion-list *ngIf="isEditing">\n            <form (ngSubmit)="save()" #heroForm="ngForm">\n                <ion-item class="form-group">\n                    <ion-label floating>Имя</ion-label>\n                    <ion-input class="form-control" name="name" type="text" [(ngModel)]="student.name" required></ion-input>\n                </ion-item>\n        \n                <ion-item>\n                    <ion-label floating>Фамилия</ion-label>\n                    <ion-input type="text" name="lastname" [(ngModel)]="student.lastname" required></ion-input>\n                </ion-item>\n        \n                <ion-item>\n                    <ion-label floating>Возраст</ion-label>\n                    <ion-input type="number" name="age" [(ngModel)]="student.age"></ion-input>\n                </ion-item>\n\n                <ion-item>\n                    <ion-label floating>Телефон</ion-label>\n                    <ion-input type="text" name="tel" [(ngModel)]="student.tel"></ion-input>\n                </ion-item>\n        \n                <ion-item>\n                    <ion-label floating>Email</ion-label>\n                    <ion-input type="text" name="email" [(ngModel)]="student.email"></ion-input>\n                </ion-item>\n        \n                <ion-item *ngIf="groups && groups.length">\n                    <ion-label>Группа</ion-label>\n                    <ion-select  name="group" [(ngModel)]="student.group">\n                        <ion-option *ngFor="let group of groups" [value]="group.id">\n                            {{group.id}}\n                        </ion-option>\n                    </ion-select>\n                </ion-item>\n        \n                <ion-item>\n                    <div style="display: flex; justify-content: space-between; align-items: center;">\n                        <button  [disabled]="!heroForm.form.valid"type="submit" ion-fab mini color="secondary">\n                            <ion-icon ios="ios-checkmark-circle" md="md-checkmark-circle"></ion-icon>\n                        </button>\n                        <button *ngIf="!isNewStudent" ion-fab mini color="danger" (click)="delete()">\n                            <ion-icon ios="ios-trash" md="md-trash"></ion-icon>\n                        </button>\n                    </div>\n                </ion-item>\n            </form>\n    \n        </ion-list>\n\n        <ion-list *ngIf="!isNewStudent">\n            <ion-item>\n                <ion-label>Редактировать</ion-label>\n                <ion-toggle [(ngModel)]="isEditing"></ion-toggle>\n            </ion-item>\n        </ion-list>\n</ion-content>'/*ion-inline-end:"/Users/valeriy/Projects/ionicapp/src/pages/contact/modal-page.html"*/
         }),
         __metadata("design:paramtypes", [__WEBPACK_IMPORTED_MODULE_1_ionic_angular__["h" /* Platform */],
             __WEBPACK_IMPORTED_MODULE_1_ionic_angular__["g" /* NavParams */],
@@ -502,7 +517,7 @@ var ModalGroup = /** @class */ (function () {
     };
     ModalGroup = __decorate([
         Object(__WEBPACK_IMPORTED_MODULE_0__angular_core__["m" /* Component */])({
-            selector: 'page-group',template:/*ion-inline-start:"/Users/valeriy/Projects/myApp/src/pages/contact/modal-group.html"*/'<ion-header>\n    <ion-toolbar>\n        <ion-title>\n            Группа\n        </ion-title>\n        <ion-buttons start>\n        <button ion-button (click)="dismiss()">\n            <span ion-text color="primary" showWhen="ios">Отмена</span>\n            <ion-icon name="md-close" showWhen="android,windows"></ion-icon>\n        </button>\n        </ion-buttons>\n    </ion-toolbar>\n</ion-header>\n\n<ion-content>\n        <ion-list *ngIf="group">\n\n            <ion-item>\n                <ion-label floating>Номер группы</ion-label>\n                <ion-input type="number" [(ngModel)]="group.id"></ion-input>\n            </ion-item>\n    \n            <ion-item>\n                <div style="display: flex; justify-content: space-between; align-items: center;">\n                    <button ion-fab mini color="secondary" (click)="save()">\n                        <ion-icon ios="ios-checkmark-circle" md="md-checkmark-circle"></ion-icon>\n                    </button>\n                </div>\n            </ion-item>\n    \n        </ion-list>\n</ion-content>'/*ion-inline-end:"/Users/valeriy/Projects/myApp/src/pages/contact/modal-group.html"*/
+            selector: 'page-group',template:/*ion-inline-start:"/Users/valeriy/Projects/ionicapp/src/pages/contact/modal-group.html"*/'<ion-header>\n    <ion-toolbar>\n        <ion-title>\n            Группа\n        </ion-title>\n        <ion-buttons start>\n        <button ion-button (click)="dismiss()">\n            <span ion-text color="primary" showWhen="ios">Отмена</span>\n            <ion-icon name="md-close" showWhen="android,windows"></ion-icon>\n        </button>\n        </ion-buttons>\n    </ion-toolbar>\n</ion-header>\n\n<ion-content>\n        <ion-list *ngIf="group">\n\n            <ion-item>\n                <ion-label floating>Номер группы</ion-label>\n                <ion-input type="number" [(ngModel)]="group.id"></ion-input>\n            </ion-item>\n    \n            <ion-item>\n                <div style="display: flex; justify-content: space-between; align-items: center;">\n                    <button ion-fab mini color="secondary" (click)="save()">\n                        <ion-icon ios="ios-checkmark-circle" md="md-checkmark-circle"></ion-icon>\n                    </button>\n                </div>\n            </ion-item>\n    \n        </ion-list>\n</ion-content>'/*ion-inline-end:"/Users/valeriy/Projects/ionicapp/src/pages/contact/modal-group.html"*/
         }),
         __metadata("design:paramtypes", [__WEBPACK_IMPORTED_MODULE_1_ionic_angular__["h" /* Platform */],
             __WEBPACK_IMPORTED_MODULE_1_ionic_angular__["g" /* NavParams */],
@@ -541,7 +556,7 @@ var HomePage = /** @class */ (function () {
     }
     HomePage = __decorate([
         Object(__WEBPACK_IMPORTED_MODULE_0__angular_core__["m" /* Component */])({
-            selector: 'page-home',template:/*ion-inline-start:"/Users/valeriy/Projects/myApp/src/pages/home/home.html"*/'<ion-header>\n  <ion-navbar>\n    <ion-title>Главная</ion-title>\n  </ion-navbar>\n</ion-header>\n\n<ion-content padding>\n  \n</ion-content>\n'/*ion-inline-end:"/Users/valeriy/Projects/myApp/src/pages/home/home.html"*/
+            selector: 'page-home',template:/*ion-inline-start:"/Users/valeriy/Projects/ionicapp/src/pages/home/home.html"*/'<ion-header>\n  <ion-navbar>\n    <ion-title>Главная</ion-title>\n  </ion-navbar>\n</ion-header>\n\n<ion-content padding>\n  \n</ion-content>\n'/*ion-inline-end:"/Users/valeriy/Projects/ionicapp/src/pages/home/home.html"*/
         }),
         __metadata("design:paramtypes", [__WEBPACK_IMPORTED_MODULE_1_ionic_angular__["f" /* NavController */]])
     ], HomePage);
@@ -702,7 +717,7 @@ var MyApp = /** @class */ (function () {
         });
     }
     MyApp = __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0__angular_core__["m" /* Component */])({template:/*ion-inline-start:"/Users/valeriy/Projects/myApp/src/app/app.html"*/'<ion-nav [root]="rootPage"></ion-nav>\n'/*ion-inline-end:"/Users/valeriy/Projects/myApp/src/app/app.html"*/
+        Object(__WEBPACK_IMPORTED_MODULE_0__angular_core__["m" /* Component */])({template:/*ion-inline-start:"/Users/valeriy/Projects/ionicapp/src/app/app.html"*/'<ion-nav [root]="rootPage"></ion-nav>\n'/*ion-inline-end:"/Users/valeriy/Projects/ionicapp/src/app/app.html"*/
         }),
         __metadata("design:paramtypes", [__WEBPACK_IMPORTED_MODULE_1_ionic_angular__["h" /* Platform */], __WEBPACK_IMPORTED_MODULE_2__ionic_native_status_bar__["a" /* StatusBar */], __WEBPACK_IMPORTED_MODULE_3__ionic_native_splash_screen__["a" /* SplashScreen */]])
     ], MyApp);
