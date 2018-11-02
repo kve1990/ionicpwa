@@ -1,75 +1,5 @@
 webpackJsonp([0],{
 
-/***/ 104:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return EventsService; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__angular_core__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_rxjs_BehaviorSubject__ = __webpack_require__(103);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_rxjs_BehaviorSubject___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_rxjs_BehaviorSubject__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__ionic_storage__ = __webpack_require__(52);
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-
-
-
-var EventsService = /** @class */ (function () {
-    function EventsService(storage) {
-        var _this = this;
-        this.storage = storage;
-        this._events = [
-            {
-                id: 1,
-                studentId: 1,
-                startTime: (new Date(2016, 7, 18, 10, 41)).toISOString(),
-                endTime: (new Date(2016, 7, 18, 13, 30)).toISOString()
-            }
-        ];
-        this.events = new __WEBPACK_IMPORTED_MODULE_1_rxjs_BehaviorSubject__["BehaviorSubject"]([]);
-        storage.get('events')
-            .then(function (res) {
-            if (res && res.length) {
-                _this.events.next(res);
-            }
-            else {
-                storage.set('events', _this._events)
-                    .then(function (res) { return _this.events.next(res); });
-            }
-        });
-    }
-    EventsService.prototype.addEvent = function (studentId, startTime, endTime) {
-        var _this = this;
-        var events = this.events.getValue();
-        this.storage.set('events', events.concat([{ id: Date.now(), studentId: studentId, startTime: startTime, endTime: endTime }]))
-            .then(function (res) { return _this.events.next(res); });
-    };
-    EventsService.prototype.deleteEvent = function (id) {
-        var events = this.events.getValue();
-        var index = events.findIndex(function (event) { return event.id === id; });
-        if (~index) {
-            events.splice(id, 1);
-            this.events.next(events);
-        }
-    };
-    EventsService = __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0__angular_core__["A" /* Injectable */])(),
-        __metadata("design:paramtypes", [__WEBPACK_IMPORTED_MODULE_2__ionic_storage__["b" /* Storage */]])
-    ], EventsService);
-    return EventsService;
-}());
-
-//# sourceMappingURL=events.service.js.map
-
-/***/ }),
-
 /***/ 114:
 /***/ (function(module, exports) {
 
@@ -152,7 +82,7 @@ var TabsPage = /** @class */ (function () {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__angular_core__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_ionic_angular__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__services_students_service__ = __webpack_require__(34);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__services_events_service__ = __webpack_require__(104);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__services_events_service__ = __webpack_require__(53);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__modal_event__ = __webpack_require__(202);
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -205,7 +135,6 @@ var AboutPage = /** @class */ (function () {
     AboutPage.prototype.renderTable = function () {
         var _this = this;
         this.timetable = new Timetable();
-        console.log(this.events);
         var minHour = this.events
             .map(function (event) { return (new Date(event.startTime)).getHours(); })
             .sort(function (a, b) { return a - b; })[0];
@@ -226,9 +155,13 @@ var AboutPage = /** @class */ (function () {
         var d = (new Date(date)).getDay();
         return d === 0 ? 6 : d - 1;
     };
+    AboutPage.prototype.findStudent = function (studentId) {
+        var student = this.students.find(function (student) { return student.id === studentId; });
+        return student.name + " " + student.lastname;
+    };
     AboutPage = __decorate([
         Object(__WEBPACK_IMPORTED_MODULE_0__angular_core__["m" /* Component */])({
-            selector: 'page-about',template:/*ion-inline-start:"/Users/valeriy/Projects/ionicapp/src/pages/about/about.html"*/'<ion-header>\n  <ion-navbar>\n    <ion-title>\n      Расписание\n    </ion-title>\n  </ion-navbar>\n</ion-header>\n\n<ion-content padding>\n\n    <div padding>\n        <ion-segment [(ngModel)]="timeoffset" (ngModelChange)="onWatch($event)">\n          <ion-segment-button value="day">\n            День\n          </ion-segment-button>\n          <ion-segment-button value="week">\n            Неделя\n          </ion-segment-button>\n          \n        </ion-segment>\n      </div>\n      \n      <div [ngSwitch]="timeoffset">\n        <ng-container *ngSwitchCase="\'day\'">\n          <ion-item>\n            <ion-label>Дата</ion-label>\n            <ion-datetime displayFormat="DD.MM.YYYY" [(ngModel)]="date"></ion-datetime>\n          </ion-item>\n\n          <ion-list>\n            <ion-item-sliding *ngFor="let event of events">\n              <ion-item>\n                <ion-avatar item-start>\n                  <img src="https://ionicframework.com/dist/preview-app/www/assets/img/avatar-finn.png">\n                </ion-avatar>\n                <h2>8:30 - 12:00</h2>\n                <h3>Valeriy Kondratko</h3>\n              </ion-item>\n              <ion-item-options side="left">\n                <button ion-button color="primary">\n                  <ion-icon name="text"></ion-icon>\n                  Text\n                </button>\n                <button ion-button color="secondary">\n                  <ion-icon name="call"></ion-icon>\n                  Call\n                </button>\n              </ion-item-options>\n              <ion-item-options side="right">\n                <button ion-button color="primary">\n                  <ion-icon name="mail"></ion-icon>\n                  Email\n                </button>\n              </ion-item-options>\n            </ion-item-sliding>\n          </ion-list>\n        </ng-container>\n\n        <ng-container *ngSwitchCase="\'week\'">\n          <div class="timetable"></div>\n\n          <button ion-button (tap)="addEvent()">Добавить</button>\n        </ng-container>\n      </div>\n\n</ion-content>\n'/*ion-inline-end:"/Users/valeriy/Projects/ionicapp/src/pages/about/about.html"*/
+            selector: 'page-about',template:/*ion-inline-start:"/Users/valeriy/Projects/ionicapp/src/pages/about/about.html"*/'<ion-header>\n  <ion-navbar>\n    <ion-title>\n      Расписание\n    </ion-title>\n  </ion-navbar>\n</ion-header>\n\n<ion-content padding>\n\n    <div padding>\n        <ion-segment [(ngModel)]="timeoffset" (ngModelChange)="onWatch($event)">\n          <ion-segment-button value="day">\n            День\n          </ion-segment-button>\n          <ion-segment-button value="all">\n            Все\n          </ion-segment-button>\n          <ion-segment-button value="week">\n            Неделя\n          </ion-segment-button>\n          \n        </ion-segment>\n      </div>\n      \n      <div [ngSwitch]="timeoffset">\n        <ng-container *ngSwitchCase="\'day\'">\n          <ion-item>\n            <ion-label>Дата</ion-label>\n            <ion-datetime displayFormat="DD.MM.YYYY" [(ngModel)]="date"></ion-datetime>\n          </ion-item>\n\n          <ion-list *ngIf="students && students.length">\n            <ion-item-sliding *ngFor="let event of events | forThisDate:date | sort">\n              <ion-item>\n                <ion-avatar item-start>\n                  <img src="https://ionicframework.com/dist/preview-app/www/assets/img/avatar-finn.png">\n                </ion-avatar>\n                <h2>{{event.startTime | date:"HH:mm"}} - {{event.endTime | date:"HH:mm"}}</h2>\n                <h3>{{findStudent(event.studentId)}}</h3>\n              </ion-item>\n              <ion-item-options side="left">\n                <button ion-button color="primary">\n                  <ion-icon name="text"></ion-icon>\n                  Text\n                </button>\n                <button ion-button color="secondary">\n                  <ion-icon name="call"></ion-icon>\n                  Call\n                </button>\n              </ion-item-options>\n              <ion-item-options side="right">\n                <button ion-button color="primary">\n                  <ion-icon name="mail"></ion-icon>\n                  Email\n                </button>\n              </ion-item-options>\n            </ion-item-sliding>\n          </ion-list>\n        </ng-container>\n\n        <ng-container *ngSwitchCase="\'week\'">\n          <div class="timetable"></div>\n        </ng-container>\n      </div>\n\n      <div [ngSwitch]="timeoffset">\n          <ng-container *ngSwitchCase="\'all\'">  \n            <ion-list>\n              <ion-item-sliding *ngFor="let event of events | sort">\n                <ion-item>\n                  <ion-avatar item-start>\n                    <img src="https://ionicframework.com/dist/preview-app/www/assets/img/avatar-finn.png">\n                  </ion-avatar>\n                  <h2>{{event.startTime | date:"dd.MM.yy HH:mm"}}-{{event.endTime | date:"HH:mm"}}</h2>\n                  <h3>{{findStudent(event.studentId)}}</h3>\n                </ion-item>\n                <ion-item-options side="left">\n                  <button ion-button color="primary">\n                    <ion-icon name="text"></ion-icon>\n                    Text\n                  </button>\n                  <button ion-button color="secondary">\n                    <ion-icon name="call"></ion-icon>\n                    Call\n                  </button>\n                </ion-item-options>\n                <ion-item-options side="right">\n                  <button ion-button color="primary">\n                    <ion-icon name="mail"></ion-icon>\n                    Email\n                  </button>\n                </ion-item-options>\n              </ion-item-sliding>\n            </ion-list>\n          </ng-container>\n  \n          <ng-container *ngSwitchCase="\'week\'">\n            <div class="timetable"></div>\n          </ng-container>\n        </div>\n\n      <ion-fab top right edge>\n          <button color="secondary" ion-fab mini (tap)="addEvent()"><ion-icon name="add"></ion-icon></button>\n      </ion-fab>\n</ion-content>\n'/*ion-inline-end:"/Users/valeriy/Projects/ionicapp/src/pages/about/about.html"*/
         }),
         __metadata("design:paramtypes", [__WEBPACK_IMPORTED_MODULE_1_ionic_angular__["f" /* NavController */],
             __WEBPACK_IMPORTED_MODULE_2__services_students_service__["a" /* StudentService */],
@@ -251,7 +184,7 @@ var AboutPage = /** @class */ (function () {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_ionic_angular__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__services_students_service__ = __webpack_require__(34);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__services_groups_service__ = __webpack_require__(41);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__services_events_service__ = __webpack_require__(104);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__services_events_service__ = __webpack_require__(53);
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -539,6 +472,7 @@ var ModalGroup = /** @class */ (function () {
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return HomePage; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__angular_core__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_ionic_angular__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__services_events_service__ = __webpack_require__(53);
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -550,15 +484,29 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 
 
+
 var HomePage = /** @class */ (function () {
-    function HomePage(navCtrl) {
+    function HomePage(navCtrl, eventService) {
+        var _this = this;
         this.navCtrl = navCtrl;
+        this.eventService = eventService;
+        this.eventService.events.subscribe(function (events) {
+            var d = Date.now();
+            _this.currentEvent = events.filter(function (event) {
+                return d >= Date.parse(event.startTime) && d < Date.parse(event.endTime);
+            });
+            _this.events = events.filter(function (event) {
+                return (new Date()).toDateString() === (new Date(event.startTime)).toDateString() &&
+                    d < Date.parse(event.startTime);
+            });
+        });
     }
     HomePage = __decorate([
         Object(__WEBPACK_IMPORTED_MODULE_0__angular_core__["m" /* Component */])({
-            selector: 'page-home',template:/*ion-inline-start:"/Users/valeriy/Projects/ionicapp/src/pages/home/home.html"*/'<ion-header>\n  <ion-navbar>\n    <ion-title>Главная</ion-title>\n  </ion-navbar>\n</ion-header>\n\n<ion-content padding>\n  \n</ion-content>\n'/*ion-inline-end:"/Users/valeriy/Projects/ionicapp/src/pages/home/home.html"*/
+            selector: 'page-home',template:/*ion-inline-start:"/Users/valeriy/Projects/ionicapp/src/pages/home/home.html"*/'<ion-header>\n  <ion-navbar>\n    <ion-title>Главная</ion-title>\n  </ion-navbar>\n</ion-header>\n\n<ion-content padding>\n    <ion-content class="card-background-page">\n\n      <ion-card *ngFor="let event of currentEvent" [style.background]="\'green\'">\n        <div class="card-title">São Paulo</div>\n        <div class="card-subtitle">{{event.startTime | date:"HH:mm"}} - {{event.endTime | date:"HH:mm"}}</div>\n      </ion-card>\n\n      <ion-card *ngFor="let event of events">\n        <div class="card-title">São Paulo</div>\n        <div class="card-subtitle">{{event.startTime | date:"HH:mm"}} - {{event.endTime | date:"HH:mm"}}</div>\n      </ion-card>\n    \n    </ion-content>\n</ion-content>\n'/*ion-inline-end:"/Users/valeriy/Projects/ionicapp/src/pages/home/home.html"*/
         }),
-        __metadata("design:paramtypes", [__WEBPACK_IMPORTED_MODULE_1_ionic_angular__["f" /* NavController */]])
+        __metadata("design:paramtypes", [__WEBPACK_IMPORTED_MODULE_1_ionic_angular__["f" /* NavController */],
+            __WEBPACK_IMPORTED_MODULE_2__services_events_service__["a" /* EventsService */]])
     ], HomePage);
     return HomePage;
 }());
@@ -604,7 +552,7 @@ Object(__WEBPACK_IMPORTED_MODULE_0__angular_platform_browser_dynamic__["a" /* pl
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__pages_contact_modal_group__ = __webpack_require__(205);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_16__pipes_studentsOfGruop_pipe__ = __webpack_require__(281);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_17__angular_forms__ = __webpack_require__(16);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_18__services_events_service__ = __webpack_require__(104);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_18__services_events_service__ = __webpack_require__(53);
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -644,7 +592,9 @@ var AppModule = /** @class */ (function () {
                 __WEBPACK_IMPORTED_MODULE_7__pages_contact_modal_page__["a" /* ModalPage */],
                 __WEBPACK_IMPORTED_MODULE_15__pages_contact_modal_group__["a" /* ModalGroup */],
                 __WEBPACK_IMPORTED_MODULE_8__pages_about_modal_event__["a" /* ModalEvent */],
-                __WEBPACK_IMPORTED_MODULE_16__pipes_studentsOfGruop_pipe__["a" /* GroupFilterPipe */]
+                __WEBPACK_IMPORTED_MODULE_16__pipes_studentsOfGruop_pipe__["b" /* GroupFilterPipe */],
+                __WEBPACK_IMPORTED_MODULE_16__pipes_studentsOfGruop_pipe__["c" /* SortEventPipe */],
+                __WEBPACK_IMPORTED_MODULE_16__pipes_studentsOfGruop_pipe__["a" /* ForThisDatePipe */]
             ],
             imports: [
                 __WEBPACK_IMPORTED_MODULE_1__angular_platform_browser__["a" /* BrowserModule */],
@@ -732,7 +682,9 @@ var MyApp = /** @class */ (function () {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return GroupFilterPipe; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return GroupFilterPipe; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "c", function() { return SortEventPipe; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return ForThisDatePipe; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__angular_core__ = __webpack_require__(0);
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -756,6 +708,36 @@ var GroupFilterPipe = /** @class */ (function () {
     return GroupFilterPipe;
 }());
 
+var SortEventPipe = /** @class */ (function () {
+    function SortEventPipe() {
+    }
+    SortEventPipe.prototype.transform = function (items) {
+        return items.sort(function (a, b) { return Date.parse(a.startTime) - Date.parse(b.startTime); });
+    };
+    SortEventPipe = __decorate([
+        Object(__WEBPACK_IMPORTED_MODULE_0__angular_core__["S" /* Pipe */])({
+            name: 'sort',
+            pure: false
+        })
+    ], SortEventPipe);
+    return SortEventPipe;
+}());
+
+var ForThisDatePipe = /** @class */ (function () {
+    function ForThisDatePipe() {
+    }
+    ForThisDatePipe.prototype.transform = function (items, arg) {
+        return items.filter(function (item) { return (new Date(item.startTime)).toDateString() === (new Date(arg)).toDateString(); });
+    };
+    ForThisDatePipe = __decorate([
+        Object(__WEBPACK_IMPORTED_MODULE_0__angular_core__["S" /* Pipe */])({
+            name: 'forThisDate',
+            pure: false
+        })
+    ], ForThisDatePipe);
+    return ForThisDatePipe;
+}());
+
 //# sourceMappingURL=studentsOfGruop.pipe.js.map
 
 /***/ }),
@@ -766,7 +748,7 @@ var GroupFilterPipe = /** @class */ (function () {
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return StudentService; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__angular_core__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_rxjs_BehaviorSubject__ = __webpack_require__(103);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_rxjs_BehaviorSubject__ = __webpack_require__(104);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_rxjs_BehaviorSubject___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_rxjs_BehaviorSubject__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__ionic_storage__ = __webpack_require__(52);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_ionic_angular__ = __webpack_require__(12);
@@ -861,7 +843,7 @@ var StudentService = /** @class */ (function () {
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return GroupService; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__angular_core__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_rxjs_BehaviorSubject__ = __webpack_require__(103);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_rxjs_BehaviorSubject__ = __webpack_require__(104);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_rxjs_BehaviorSubject___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_rxjs_BehaviorSubject__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_ionic_angular__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__ionic_storage__ = __webpack_require__(52);
@@ -927,6 +909,76 @@ var GroupService = /** @class */ (function () {
 }());
 
 //# sourceMappingURL=groups.service.js.map
+
+/***/ }),
+
+/***/ 53:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return EventsService; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__angular_core__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_rxjs_BehaviorSubject__ = __webpack_require__(104);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_rxjs_BehaviorSubject___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_rxjs_BehaviorSubject__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__ionic_storage__ = __webpack_require__(52);
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+
+
+
+var EventsService = /** @class */ (function () {
+    function EventsService(storage) {
+        var _this = this;
+        this.storage = storage;
+        this._events = [
+            {
+                id: 1,
+                studentId: 1,
+                startTime: (new Date(2016, 7, 18, 10, 41)).toISOString(),
+                endTime: (new Date(2016, 7, 18, 13, 30)).toISOString()
+            }
+        ];
+        this.events = new __WEBPACK_IMPORTED_MODULE_1_rxjs_BehaviorSubject__["BehaviorSubject"]([]);
+        storage.get('events')
+            .then(function (res) {
+            if (res && res.length) {
+                _this.events.next(res);
+            }
+            else {
+                storage.set('events', _this._events)
+                    .then(function (res) { return _this.events.next(res); });
+            }
+        });
+    }
+    EventsService.prototype.addEvent = function (studentId, startTime, endTime) {
+        var _this = this;
+        var events = this.events.getValue();
+        this.storage.set('events', events.concat([{ id: Date.now(), studentId: studentId, startTime: startTime, endTime: endTime }]))
+            .then(function (res) { return _this.events.next(res); });
+    };
+    EventsService.prototype.deleteEvent = function (id) {
+        var events = this.events.getValue();
+        var index = events.findIndex(function (event) { return event.id === id; });
+        if (~index) {
+            events.splice(id, 1);
+            this.events.next(events);
+        }
+    };
+    EventsService = __decorate([
+        Object(__WEBPACK_IMPORTED_MODULE_0__angular_core__["A" /* Injectable */])(),
+        __metadata("design:paramtypes", [__WEBPACK_IMPORTED_MODULE_2__ionic_storage__["b" /* Storage */]])
+    ], EventsService);
+    return EventsService;
+}());
+
+//# sourceMappingURL=events.service.js.map
 
 /***/ })
 

@@ -25681,3 +25681,32 @@ ion-navbar.toolbar {
 .timetable .time-entry {
   background-color: rgba(236, 106, 94, 0.5) !important;
 }
+
+.card-background-page ion-card {
+  position: relative;
+  text-align: center;
+  background: rgba(255, 127, 80, 0.75);
+  border: 1px solid coral;
+  height: 180px;
+}
+
+.card-background-page .card-title {
+  position: absolute;
+  top: 36%;
+  font-size: 2.0em;
+  width: 100%;
+  font-weight: bold;
+  color: #fff;
+  background: transparent;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.2);
+}
+
+.card-background-page .card-subtitle {
+  font-size: 1.0em;
+  position: absolute;
+  top: 52%;
+  width: 100%;
+  color: #fff;
+  background: transparent;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.2);
+}
